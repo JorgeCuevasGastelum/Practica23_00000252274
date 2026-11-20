@@ -1,0 +1,52 @@
+<section class="encabezado">
+  <div>
+    <h1>{{ clase()?.nombre ?? 'Clase' }}</h1>
+    <p>Los horarios de la clase y sus lugares disponibles.</p>
+  </div>
+  <div class="acciones">
+    <a [routerLink]="['/clases', id(), 'editar']" class="boton">Editar</a>
+    <a routerLink="/clases" class="boton boton--secundario">← Volver al catálogo</a>
+  </div>
+</section>
+
+@if (recurso.isLoading()) {
+  <p class="cargando">Cargando la clase…</p>
+} @else if (error(); as error) {
+  <div class="aviso aviso--error">{{ error }}</div>
+} @else if (clase(); as clase) {
+  <div class="tablero">
+    <section class="tarjeta">
+      <h2>Horarios</h2>
+      <ul class="horarios">
+        @for (h of clase.horarios; track h.id) {
+          <li class="horario">
+            <div>
+              <div class="horario__cuando">{{ h.dia }} · {{ h.horaInicio }}</div>
+              <div class="horario__quien">{{ h.entrenador }}</div>
+            </div>
+            @if (h.disponibles === 0) {
+              <span class="etiqueta etiqueta--lleno">Lleno</span>
+            } @else {
+              <span class="etiqueta">{{ h.disponibles }} de {{ h.cupoMaximo }} lugares</span>
+            }
+          </li>
+        } @empty {
+          <p class="vacio">Esta clase todavía no tiene horarios.</p>
+        }
+      </ul>
+    </section>
+
+    <aside class="lateral tarjeta">
+      <img [src]="imagen()" [alt]="clase.nombre" />
+      <p>{{ clase.descripcion }}</p>
+      <div class="dato">
+        <span class="dato__clave">Categoría</span>
+        <span class="dato__valor">{{ clase.categoria }}</span>
+      </div>
+      <div class="dato">
+        <span class="dato__clave">Duración</span>
+        <span class="dato__valor">{{ clase.duracionMin }} min</span>
+      </div>
+    </aside>
+  </div>
+}

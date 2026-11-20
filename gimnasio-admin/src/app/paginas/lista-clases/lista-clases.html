@@ -1,0 +1,104 @@
+<section class="encabezado">
+  <div>
+    <h1>Clases</h1>
+    <p>El catálogo de clases del gimnasio.</p>
+  </div>
+  <div class="acciones">
+    <a routerLink="/clases/nueva" class="boton">+ Nueva clase</a>
+  </div>
+</section>
+
+<!-- La caja de búsqueda va FUERA de los estados: si se escondiera mientras
+     carga, perdería el foco a la mitad de lo que se está escribiendo. -->
+<div class="buscador">
+  <input
+    type="search"
+    [formControl]="busqueda"
+    placeholder="Buscar clase por nombre…"
+    aria-label="Buscar clase por nombre"
+  />
+  <span class="buscador__estado">
+    @if (catalogo.cargando()) {
+      Buscando…
+    }
+  </span>
+</div>
+
+<!-- Los estados de la petición: error, la primera carga y listo -->
+@if (catalogo.error(); as error) {
+  <div class="aviso aviso--error">
+    <p>{{ error }}</p>
+    <button class="boton boton--chico" (click)="catalogo.recargar()">Reintentar</button>
+  </div>
+} @else if (catalogo.cargando() && catalogo.clases().length === 0) {
+  <div class="rejilla">
+    @for (n of [1, 2, 3]; track n) {
+      <div class="esqueleto"></div>
+    }
+  </div>
+} @else {
+  <app-filtro-categoria />
+
+  <!-- El resumen: los números son computed() del servicio, y cambian con el filtro -->
+  <section class="resumen">
+    <div class="resumen__dato">
+      <span class="resumen__numero">{{ catalogo.visibles().length }}</span>
+      <span class="resumen__texto">clases visibles</span>
+    </div>
+    <div class="resumen__dato">
+      <span class="resumen__numero">{{ catalogo.minutos() }}</span>
+      <span class="resumen__texto">minutos a la semana</span>
+    </div>
+    <div class="resumen__dato">
+      <span class="resumen__numero">{{ catalogo.deUnaHora() }}</span>
+      <span class="resumen__texto">clases de una hora o más</span>
+    </div>
+  </section>
+
+  <div class="tablero">
+    <!-- Una tarjeta por clase visible. track: Angular reconoce cada tarjeta por su id. -->
+    <div class="rejilla">
+      @for (clase of catalogo.visibles(); track clase.id) {
+        <app-tarjeta-clase
+          [clase]="clase"
+          [activa]="clase.id === catalogo.seleccionada()?.id"
+          (elegida)="catalogo.elegir($event)"
+        />
+      } @empty {
+        @if (catalogo.termino()) {
+          <p class="vacio">Ninguna clase coincide con «{{ catalogo.termino() }}».</p>
+        } @else {
+          <p class="vacio">No hay clases para mostrar.</p>
+        }
+      }
+    </div>
+
+    <!-- El detalle de la clase elegida -->
+    <aside class="lateral tarjeta">
+      @if (catalogo.seleccionada(); as clase) {
+        <img [src]="imagenElegida()" [alt]="clase.nombre" />
+        <h2>{{ clase.nombre }}</h2>
+        <p>{{ clase.descripcion }}</p>
+        <div class="dato">
+          <span class="dato__clave">Categoría</span>
+          <span class="dato__valor">{{ clase.categoria }}</span>
+        </div>
+        <div class="dato">
+          <span class="dato__clave">Duración</span>
+          <span class="dato__valor">{{ clase.duracionMin }} min</span>
+        </div>
+        <div class="acciones">
+          <a class="boton boton--chico" [routerLink]="['/clases', clase.id, 'editar']">Editar</a>
+          <a class="boton boton--secundario boton--chico" [routerLink]="['/clases', clase.id]">
+            Ver horarios
+          </a>
+          <button class="boton boton--secundario boton--chico" (click)="catalogo.elegir(clase)">
+            Cerrar
+          </button>
+        </div>
+      } @else {
+        <p class="vacio">Elige una clase para ver su detalle.</p>
+      }
+    </aside>
+  </div>
+}
